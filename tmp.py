@@ -6,19 +6,15 @@ import requests
 import csv
 import json
 
-max_page = 834
-petition_n = 73080
+
+petition_n = 53360
 petition_url = 'https://petition.president.gov.ua/petition/' + str(petition_n)
 
 
-while True:
-    html = requests.get(petition_url + '/votes/' + str(max_page)).text
-    soup = BeautifulSoup(html, 'lxml')
-    founds = soup.find('div', class_=re.compile(r'^table$'))
-    if founds:
-        break
-    else:
-        max_page -= 1
+html = requests.get(petition_url).text
+soup = BeautifulSoup(html, 'lxml')
+votes = soup.find('div', class_=re.compile(r'^petition_votes_txt$')).find('span').text
+max_page = int(votes) / 30 if int(votes) % 30 == 0 else (int(votes) // 30) + 1
 
 files = [petition_url + '/votes/' + str(i) for i in range(1, max_page + 1)]
 
@@ -34,8 +30,8 @@ for file in files:
         name = r.find('div', class_='table_cell name').string
         date = r.find('div', class_='table_cell date').string
 
-        # print(number, name, date)
         user_dict[int(number)] = [name, date]
+    print(file)
 
 with open("output.csv", "w", newline='', encoding="cp1251", errors='ignore') as csv_file:
     writer = csv.writer(csv_file, delimiter=';')
