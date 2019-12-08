@@ -13,8 +13,6 @@ files = [petition_url + '/votes/' + str(i) for i in range(1, 644)]
 page_count = 'users-table-pag'
 
 
-# files_dir = os.path.join('htmls', '73080')
-# files = [f for f in os.listdir(files_dir) if f.endswith('.html')]
 user_dict = dict()
 
 
@@ -31,12 +29,12 @@ for file in files:
         # print(number, name, date)
         user_dict[int(number)] = [name, date]
 
-print(user_dict)
-# for i in range(1, 500):
-#     print(i, user_dict[i])
+with open("output.csv", "w", newline='', encoding="cp1251", errors='ignore') as csv_file:
+    writer = csv.writer(csv_file, delimiter=';')
+    for key, val in user_dict.items():
+        writer.writerow([key, val[0], val[1]])
 
-w = csv.writer(open("output.csv", "w", encoding="utf8"))
-for key, val in user_dict.items():
-    w.writerow([key, val[0], val[1]])
+with open('dict.json', 'w', encoding='utf-8') as json_file:
+    json = json.dumps(user_dict, ensure_ascii=False)
+    json_file.write(json)
 
-json = json.dumps(user_dict)
