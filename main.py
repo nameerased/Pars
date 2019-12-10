@@ -4,11 +4,12 @@ import re
 import requests
 from models import Petition, db
 import time
+from peewee import chunked
+
 
 # petitions = [53360, 55, 40, 53984, 215, 1606, 66, 48, 3354, 67062, 50271, 33, 12531, 1365, 42862, 57092, 5381, 63, 5147, 248, 53988, 7786]
-#  58280, 18957, 20993, 39, 319, 53544, 52270, 9785, 558, 2933, 50, 504, 18160, 208, 1799, 256
-petitions = [44428, 10024, 176, 4504]
-# petition_url = 'https://petition.president.gov.ua/petition/' + str(petition_n)
+#  58280, 18957, 20993, 39, 319, 53544, 52270, 9785, 558, 2933, 50, 504, 18160, 208, 1799, 256, 44428, 10024, 176, 4504
+petitions = [44428, 10024]
 
 
 def max_page(petition_url):
@@ -42,7 +43,7 @@ for petition in petitions:
 
     with db.atomic():
         # by default SQLite limits the number of bound variables in a SQL query to 999
-        for idx in range(0, len(data), 999):
-            Petition.insert_many(data[idx:idx + 999]).execute()
+        for batch in chunked(data, 999):
+            Petition.insert_many(batch).execute()
 
 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
