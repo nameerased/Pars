@@ -23,22 +23,22 @@ class Petition(Model):
         return f'{self.petition_id}: {self.position_number} {self.username} {self.sign_date}'
 
 
-class Test(Model):
-    class Meta:
-        database = db
-        db_table = "petition"
-
-    petition_id = IntegerField()
-    position_number = IntegerField()
-    username = CharField()
-    sign_date = CharField()
+# class Test(Model):
+#     class Meta:
+#         database = db
+#         db_table = "petition"
+#
+#     petition_id = IntegerField()
+#     position_number = IntegerField()
+#     username = CharField()
+#     sign_date = CharField()
 
 
 
 if __name__ == '__main__':
     # db.drop_tables([Parking, Own], safe=True)
-    # db.create_tables([Petition], safe=True)
-    db.create_tables([Test], safe=True)
+    db.create_tables([Petition], safe=True)
+    # db.create_tables([Test], safe=True)
 
 
 # user_dict = {
