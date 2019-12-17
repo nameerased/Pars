@@ -38,7 +38,7 @@ def name_contain(substring):
             print(f'{i.petition_id}: {i.username}')
 
 
-name_contain(r'Дем.+янчук.+С')
+name_contain(r'Дем.денко.+Ант')
 
 
 # most frequent names
@@ -65,4 +65,4 @@ def petitions_count():
         print(i)
 
 
-petitions_count()
+# petitions_count()
