@@ -1,30 +1,23 @@
 from peewee import SqliteDatabase, IntegerField, Model, DateTimeField, CharField, ForeignKeyField, BooleanField, fn
 from datetime import datetime
+import locale
 from playhouse.sqlite_ext import SqliteExtDatabase
 from peewee import chunked
-
-# db_old = SqliteDatabase('users.db', pragmas={'foreign_keys': 1})
-#
-#
-# def time_format():
-#     return datetime.now().strftime('%y.%m.%d %H:%M:%S.%f')[:-4]
-#
-#
-# class Petition_old(Model):
-#     class Meta:
-#         database = db_old
-#         db_table = "petition"
-#
-#     petition_id = IntegerField()
-#     position_number = IntegerField()
-#     username = CharField()
-#     sign_date = CharField()
-#
-#     def __str__(self):
-#         return f'{self.petition_id}: {self.position_number} {self.username} {self.sign_date}'
+import pymorphy2
+from playhouse.migrate import *
+import requests
+from bs4 import BeautifulSoup
+import json
+import time
 
 
 db = SqliteExtDatabase('petitions.db', pragmas=(
+    ('cache_size', -1024 * 64),  # 64MB page-cache.
+    ('journal_mode', 'wal'),  # Use WAL-mode (you should always use this!).
+    ('foreign_keys', 1)), regexp_function=True)  # Enforce foreign-key constraints.
+
+
+db_2 = SqliteExtDatabase('petitions__2.db', pragmas=(
     ('cache_size', -1024 * 64),  # 64MB page-cache.
     ('journal_mode', 'wal'),  # Use WAL-mode (you should always use this!).
     ('foreign_keys', 1)), regexp_function=True)  # Enforce foreign-key constraints.
@@ -35,29 +28,77 @@ class Petition(Model):
         database = db
         db_table = "petition"
 
-    petition_id = IntegerField()
-    position_number = IntegerField()
-    username = CharField()
-    sign_date = CharField()
+    petition_id = IntegerField(unique=True)
+    status = BooleanField(null=True)
+    title = TextField()
+    article = TextField()
+    answer = TextField(null=True)
 
-    def __str__(self):
-        return f'{self.petition_id}: {self.position_number} {self.username} {self.sign_date}'
+
+class Petition_2(Model):
+    class Meta:
+        database = db_2
+        db_table = "petition"
+
+    petition_id = IntegerField(unique=True)
+    status = BooleanField(null=True)
+    title = TextField()
+    article = TextField()
+    answer = TextField(null=True)
+
+
+class Vote(Model):
+    class Meta:
+        database = db
+        db_table = "vote"
+
+    petition = ForeignKeyField(Petition, field='petition_id')
+    position_number = IntegerField()
+    username = CharField(max_length=100)
+    sign_date = DateField()
+    gender = BooleanField(null=True)
+
+
+class User(Model):
+    class Meta:
+        database = db_2
+        db_table = "user"
+
+    petition = ForeignKeyField(Petition_2, field='petition_id')
+    position_number = IntegerField()
+    username = CharField(max_length=100)
+    sign_date = DateField()
+    gender = BooleanField(null=True)
+
+
+class Name(Model):
+    class Meta:
+        database = db
+        db_table = "name"
+
+    username = CharField(max_length=20, unique=True)
+    gender = BooleanField(null=True)
+
+
+class Name_2(Model):
+    class Meta:
+        database = db_2
+        db_table = "name"
+
+    username = CharField(max_length=20, unique=True)
+    gender = BooleanField(null=True)
 
 
 if __name__ == '__main__':
-    # db_old.create_tables([Petition_old], safe=True)
-    db.create_tables([Petition], safe=True)
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+    # db.create_tables([Petition], safe=True)
 
-    # query = Petition_old.select()
-    #
-    # # for n in range(0, 2200000, 100000):
-    # data = []
-    # for i in query[2200000 + 1:]:
-    #     data.append(
-    #         (i.petition_id, i.position_number, i.username, i.sign_date)
-    #     )
-    # print('append')
-    # with db.atomic():
-    #     # by default SQLite limits the number of bound variables in a SQL query to 999
-    #     for batch in chunked(data, 990):
-    #         Petition.insert_many(batch).execute()
+    # migrator = SqliteMigrator(db)
+    # gender = BooleanField(null=True, default=None)
+    # migrate(
+    #     migrator.drop_column('Petition', 'gender'),
+    #     migrator.add_column('Petition', 'gender', gender),
+    # )
+
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+    pass

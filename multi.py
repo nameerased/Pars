@@ -6,10 +6,10 @@ from models import Petition, db
 import time
 from peewee import chunked
 from multiprocessing import Pool
+import pymorphy2
 
 
-petitions = [53988] # 35413
-
+petitions = [53988]  # 35413
 
 
 def max_page(petition_url):
@@ -17,19 +17,19 @@ def max_page(petition_url):
     soup = BeautifulSoup(html, 'lxml')
     votes = int(soup.find('div', class_=re.compile(r'^petition_votes_txt$')).find('span').text)
     max_page = votes / 30 if votes % 30 == 0 else (votes // 30) + 1
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
     return int(max_page)
 
-
-print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
 
 def get_all_links(petition):
     petition_url = 'https://petition.president.gov.ua/petition/' + str(petition)
     all_links = [petition_url + '/votes/' + str(i) for i in range(1, max_page(petition_url) + 1)]
+    print(len(all_links))
     return all_links
 
 
-print(len(get_all_links(petitions[0])))
-print(get_all_links(petitions[0])[:5])
+# print(len(get_all_links(petitions[0])))
+# print(get_all_links(petitions[0])[:5])
 
 
 # for file in get_all_links(petitions[0]):
@@ -46,9 +46,9 @@ print(get_all_links(petitions[0])[:5])
 #         data.append((petitions, position_number, username, sign_date))
 
 
-def make_all(file):
+def make_all(link):
     data = []
-    html = requests.get(file).text
+    html = requests.get(link).text
     soup = BeautifulSoup(html, 'lxml')
     rows = soup.find_all('div', class_=re.compile(r'^table_row$'))
     
@@ -59,11 +59,10 @@ def make_all(file):
         
         data.append((petitions, position_number, username, sign_date))
 
-
-with Pool(15) as p:
-    p.map(make_all, get_all_links(petitions[0]))
-    
-
+    # with db.atomic():
+    #     # by default SQLite limits the number of bound variables in a SQL query to 999
+    #     for batch in chunked(data, 200):
+    #         Petition.insert_many(batch).execute()
 
 
 print(petitions, time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
@@ -74,3 +73,7 @@ print(petitions, time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 #         Petition.insert_many(batch).execute()
 
 # print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+
+if __name__ == '__main__':
+    with Pool(3) as p:
+        p.map(make_all, get_all_links(petitions[0]))

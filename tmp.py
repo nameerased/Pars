@@ -5,16 +5,15 @@ import re
 import requests
 import csv
 import json
-from models import Petition
+from models import Petition, Name, Vote, User, db, Name_2, db_2, Petition_2
 import time
-from peewee import fn
+from peewee import fn, chunked
 from collections import Counter
 
-# total rows
-# total_rows = Petition_old.select().count()
-# print('Total rows', total_rows)
-total_rows = Petition.select().count()
-print('Total rows', total_rows)
+
+def get_html(url):
+    r = requests.get(url)
+    return r.text
 
 
 # petitions list
@@ -24,13 +23,9 @@ def petitions_list():
     return petitions
 
 
-print('Len: ', len(petitions_list()))
-
-
 # name contain substring
 def name_contain(substring):
     query = Petition.select().where(Petition.username.regexp(substring))
-
     print(f'Found: {len(query)} with substring {substring}')
     show = int(input('Show (1), escape(0): '))
     if show:
@@ -38,16 +33,14 @@ def name_contain(substring):
             print(f'{i.petition_id}: {i.username}')
 
 
-name_contain(r'Дем.денко.+Ант')
-
-
 # most frequent names
-query = (Petition
-         .select(Petition.username, fn.COUNT(Petition.petition_id).alias('count'))
-         .group_by(Petition.username)
-         .order_by(fn.COUNT(Petition.petition_id).desc()))
-for row in query[:10]:
-    print(row.username, row.count)
+def most_frequent_names():
+    query = (Petition
+             .select(Petition.username, fn.COUNT(Petition.petition_id).alias('count'))
+             .group_by(Petition.username)
+             .order_by(fn.COUNT(Petition.petition_id).desc()))
+    for row in query[:10]:
+        print(row.username, row.count)
 
 
 # count by petitions
@@ -65,4 +58,72 @@ def petitions_count():
         print(i)
 
 
-# petitions_count()
+def get_petition_info(petition_n):
+    petition_url = 'https://petition.president.gov.ua/petition/' + str(petition_n)
+    html = get_html(petition_url)
+    soup = BeautifulSoup(html, 'lxml')
+    title = soup.find('div', class_='page_left col-xs-8').find('h1').text
+    article = soup.find('div', class_='article').text.strip()
+    answer = soup.find('div', id='pet-tab-2').text.strip()
+    answer = answer if answer else None
+    return title, article, answer
+
+
+def copy_db():
+    # Name_2, Petition_2, User
+    # db.drop_tables([Peticia], safe=True)
+    # db.create_tables([Peticia], safe=True)
+
+
+    # db.create_tables([Name], safe=True)
+    # query = Name_2.select()
+    # data = []
+    # for i in query:
+    #     data.append((i.username, i.gender))
+    #
+    # with db.atomic():
+    #     # by default SQLite limits the number of bound variables in a SQL query to 999
+    #     for batch in chunked(data, 450):
+    #         Name.insert_many(batch, fields=[Name.username, Name.gender]).execute()
+    #
+    #
+    #
+    # db.create_tables([Petition], safe=True)
+    # query = Petition_2.select()
+    # for i in query:
+    #     Petition.create(
+    #         petition_id=i.petition_id,
+    #         status=i.status,
+    #         title=i.title,
+    #         article=i.article,
+    #         answer=i.answer
+    #     )
+    #
+    #
+    #
+    db.create_tables([Vote], safe=True)
+    for i in User.select(User.petition_id).distinct():
+        data = []
+        # p = Petition.get(petition_id=i.petition_id).petition_id
+        p = i.petition_id
+        query = User.select().where(User.petition == i.petition_id)
+
+        for user in query:
+            data.append((p, user.position_number, user.username, user.sign_date, user.gender))
+
+        with db.atomic():
+            # by default SQLite limits the number of bound variables in a SQL query to 999
+            for batch in chunked(data, 198):
+                # User.insert_many(batch, fields=[User.petition, User.position_number,
+                #                                 User.username, User.sign_date, User.gender]).execute()
+                Vote.insert_many(batch).execute()
+
+
+if __name__ == '__main__':
+    # print('Len: ', len(petitions_list()))
+    # name_contain(r'Дем.денко.+Ант')
+    # most_frequent_names()
+    # petitions_count()
+    # copy_db()
+    # get_petition_info(53360)  # 53360 96180
+    pass

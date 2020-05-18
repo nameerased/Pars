@@ -3,3 +3,5 @@ peewee
 wordcloud
 lxml
 requests
+numpy
+pymorphy2
