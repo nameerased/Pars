@@ -17,27 +17,9 @@ db = SqliteExtDatabase('petitions.db', pragmas=(
     ('foreign_keys', 1)), regexp_function=True)  # Enforce foreign-key constraints.
 
 
-db_2 = SqliteExtDatabase('petitions__2.db', pragmas=(
-    ('cache_size', -1024 * 64),  # 64MB page-cache.
-    ('journal_mode', 'wal'),  # Use WAL-mode (you should always use this!).
-    ('foreign_keys', 1)), regexp_function=True)  # Enforce foreign-key constraints.
-
-
 class Petition(Model):
     class Meta:
         database = db
-        db_table = "petition"
-
-    petition_id = IntegerField(unique=True)
-    status = BooleanField(null=True)
-    title = TextField()
-    article = TextField()
-    answer = TextField(null=True)
-
-
-class Petition_2(Model):
-    class Meta:
-        database = db_2
         db_table = "petition"
 
     petition_id = IntegerField(unique=True)
@@ -59,30 +41,9 @@ class Vote(Model):
     gender = BooleanField(null=True)
 
 
-class User(Model):
-    class Meta:
-        database = db_2
-        db_table = "user"
-
-    petition = ForeignKeyField(Petition_2, field='petition_id')
-    position_number = IntegerField()
-    username = CharField(max_length=100)
-    sign_date = DateField()
-    gender = BooleanField(null=True)
-
-
 class Name(Model):
     class Meta:
         database = db
-        db_table = "name"
-
-    username = CharField(max_length=20, unique=True)
-    gender = BooleanField(null=True)
-
-
-class Name_2(Model):
-    class Meta:
-        database = db_2
         db_table = "name"
 
     username = CharField(max_length=20, unique=True)

@@ -7,18 +7,18 @@ import time
 from peewee import chunked
 from multiprocessing import Pool
 import pymorphy2
+from main import max_page
 
 
 petitions = [53988]  # 35413
 
 
-def max_page(petition_url):
-    html = requests.get(petition_url).text
-    soup = BeautifulSoup(html, 'lxml')
-    votes = int(soup.find('div', class_=re.compile(r'^petition_votes_txt$')).find('span').text)
-    max_page = votes / 30 if votes % 30 == 0 else (votes // 30) + 1
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-    return int(max_page)
+# def max_page(petition_url):
+#     html = requests.get(petition_url).text
+#     soup = BeautifulSoup(html, 'lxml')
+#     votes = int(soup.find('div', class_=re.compile(r'^petition_votes_txt$')).find('span').text)
+#     max_page = votes / 30 if votes % 30 == 0 else (votes // 30) + 1
+#     return int(max_page)
 
 
 def get_all_links(petition):

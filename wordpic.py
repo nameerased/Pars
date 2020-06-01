@@ -1,4 +1,4 @@
-from models import Petition, db
+from models import Petition, Vote, db
 import time
 from datetime import datetime, date
 import locale
@@ -13,7 +13,7 @@ import os
 
 def get_names(petition_n):
     names = []
-    query = Petition.select(Petition.username).where(Petition.petition_id == petition_n)
+    query = Vote.select(Vote.username).where(Vote.petition == petition_n)
     for i in query:
         try:
             names.append(" ".join(i.username.split()).split(' ')[1])
@@ -23,23 +23,23 @@ def get_names(petition_n):
 
 
 def get_genders(petition_n):
-    query = Petition.select(Petition.gender).where(Petition.petition_id == petition_n)
+    query = Vote.select(Vote.gender).where(Vote.petition == petition_n)
     genders = [i.gender for i in query]
     return Counter(genders)
 
 
 def get_dates(petition_n):
-    query = Petition.select(Petition.sign_date).where(Petition.petition_id == petition_n)
+    query = Vote.select(Vote.sign_date).where(Vote.petition == petition_n)
     dates = Counter([i.sign_date for i in query])
     dates = OrderedDict(sorted(dates.items(), reverse=False))
     return dates
 
 
 def draw_pic(petition_n):
-    wordcloud = WordCloud(background_color="white", width=2400, height=1600, max_words=100)
+    wordcloud = WordCloud(background_color="white", width=1200, height=800, max_words=100)
     freq = get_names(petition_n)
     wordcloud.generate_from_frequencies(freq)
-    plt.figure(figsize=(24, 16))
+    plt.figure(figsize=(12, 8))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis("off")
     plt.tight_layout(pad=0)
@@ -48,8 +48,8 @@ def draw_pic(petition_n):
 
 def draw_bars_pie(petition_n):
     fig, ax = plt.subplots(2, 1, figsize=(10, 10))
-
     data = get_dates(petition_n)
+    title = Petition.get(petition_id=petition_n).title
 
     def autolabel(rects, height_factor):
         for i, rect in enumerate(rects):
@@ -65,7 +65,7 @@ def draw_bars_pie(petition_n):
     xfmt = mdates.DateFormatter('%m-%d')
     ax[0].xaxis.set_major_formatter(xfmt)
     plt.setp(ax[0].get_xticklabels(), rotation=45, )
-    ax[0].set_title(f'Петиция {petition_n}')
+    ax[0].set_title(f'Петиція {petition_n}\n{title}')
     autolabel(ax[0].patches, height_factor=0.85)
 
     genders = get_genders(petition_n)
@@ -78,9 +78,8 @@ def draw_bars_pie(petition_n):
 
         return my_autopct
 
-    # sizes = list(genders.values())
-    sizes = [genders[True], genders[False], genders[None], ]
-    labels = list(genders.keys())
+    sizes = [genders[True], genders[False], genders[None]]
+    # labels = list(genders.keys())
     colors = ['cornflowerblue', 'pink', 'gray']
     ax[1].pie(
         sizes, autopct=make_autopct(sizes), radius=1.3, pctdistance=0.8,

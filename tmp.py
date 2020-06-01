@@ -5,7 +5,7 @@ import re
 import requests
 import csv
 import json
-from models import Petition, Name, Vote, User, db, Name_2, db_2, Petition_2
+from models import Petition, Name, Vote, db
 import time
 from peewee import fn, chunked
 from collections import Counter
@@ -58,15 +58,7 @@ def petitions_count():
         print(i)
 
 
-def get_petition_info(petition_n):
-    petition_url = 'https://petition.president.gov.ua/petition/' + str(petition_n)
-    html = get_html(petition_url)
-    soup = BeautifulSoup(html, 'lxml')
-    title = soup.find('div', class_='page_left col-xs-8').find('h1').text
-    article = soup.find('div', class_='article').text.strip()
-    answer = soup.find('div', id='pet-tab-2').text.strip()
-    answer = answer if answer else None
-    return title, article, answer
+
 
 
 def copy_db():
